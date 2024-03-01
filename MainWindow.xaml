@@ -1,0 +1,107 @@
+﻿<Window x:Class="TaskManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TaskManager"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="900" Width="1600">
+    <Window.Resources>
+        <local:PriorityValidationRule x:Key="PriorityValidationRule"/>
+        <local:TaskContentValidationRule x:Key="TaskContentValidationRule"/>
+    </Window.Resources>
+
+    <Grid>
+        <Frame x:Name="MainFrame" Content="Frame"/>
+        <TabControl>
+            <TabItem Header="Zadania">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="400"/>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="50"/>
+                    </Grid.RowDefinitions>
+                    <ListView Grid.Row="0" Grid.Column="0" ItemsSource="{Binding Tasks, Mode=TwoWay}" SelectedItem="{Binding SelectedTask}" Grid.ColumnSpan="2" >
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="60" />
+                                <GridViewColumn DisplayMemberBinding="{Binding Content}" Header="Zadanie" Width="1000"  />
+                                <GridViewColumn DisplayMemberBinding="{Binding Deadline}" Header="Termin" Width="300" />
+                                <GridViewColumn DisplayMemberBinding="{Binding Priority}" Header="Priorytet" Width="60" />
+                                <GridViewColumn Header="Czy zakończone" Width="60">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsCompleted, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                    <Label HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0" Content="Zadanie"/>
+                    <TextBox Grid.Row="1" Grid.Column="1">
+                        <Binding Path="TaskContent" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <local:TaskContentValidationRule/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox>
+                    <Label HorizontalAlignment="Right" Grid.Row="2" Grid.Column="0" Content="Termin"/>
+                    <DatePicker Name="dpDeadline" Grid.Row="2" Grid.Column="1" Text="{Binding Deadline, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label HorizontalAlignment="Right" Grid.Row="3" Grid.Column="0" Content="Priorytet"/>
+                    <TextBox Grid.Row="3" Grid.Column="1">
+                        <Binding Path="Priority" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <local:PriorityValidationRule Min="1" Max="3" />
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox>
+                    <StackPanel HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal">
+                        <Button Width="200" Content="Zrobione" Command="{Binding MarkAsDoneCommand}"/>
+                        <Button Width="200" Content="Zapisz" Command="{Binding SaveTaskCommand}"/>
+                        <Button Width="200" Content="Usuń" Command="{Binding DeleteTaskCommand}"/>
+                        <Button Width="200" Content="Anuluj zaznaczenie" Command="{Binding DeselectTaskCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Notatki">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="400"/>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="50"/>
+                    </Grid.RowDefinitions>
+                    <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding Notes, Mode=TwoWay}" SelectedItem="{Binding SelectedNote}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="60" />
+                                <GridViewColumn DisplayMemberBinding="{Binding Content}" Header="Treść notatki" Width="1000"  />
+                                <GridViewColumn DisplayMemberBinding="{Binding Created}" Header="Data utworzenia" Width="300" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                    <Label HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0" Content="Treść notatki"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NoteContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label HorizontalAlignment="Right" Grid.Row="3" Grid.Column="0" Content="Priorytet"/>
+                    <StackPanel HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal">
+                        <Button Width="200" Content="Zapisz" Command="{Binding SaveNoteCommand}"/>
+                        <Button Width="200" Content="Usuń" Command="{Binding DeleteNoteCommand}"/>
+                        <Button Grid.Row="4" Grid.Column="1"  Width="200" Content="Anuluj zaznaczenie" Command="{Binding DeselectNoteCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
