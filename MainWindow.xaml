@@ -9,6 +9,7 @@
     <Window.Resources>
         <local:PriorityValidationRule x:Key="PriorityValidationRule"/>
         <local:TaskContentValidationRule x:Key="TaskContentValidationRule"/>
+        <local:DateConverter x:Key="MyDateConverter"/>
     </Window.Resources>
 
     <Grid>
@@ -21,18 +22,29 @@
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="50"/>
                         <RowDefinition Height="400"/>
                         <RowDefinition Height="50"/>
                         <RowDefinition Height="50"/>
                         <RowDefinition Height="50"/>
                         <RowDefinition Height="50"/>
                     </Grid.RowDefinitions>
-                    <ListView Grid.Row="0" Grid.Column="0" ItemsSource="{Binding Tasks, Mode=TwoWay}" SelectedItem="{Binding SelectedTask}" Grid.ColumnSpan="2" >
+                    <StackPanel VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+                        <Label Width="100" HorizontalContentAlignment="Right" Content="Wyszukaj:"/>
+                        <TextBox Name="tbSearch" Text="{Binding SearchPhrase, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="500"/>
+                        <CheckBox x:Name="cbAll" Grid.Row="1" Margin="5,0,0,0" 
+                            Content="Wszystkie" IsThreeState="True" IsChecked="{Binding AllIsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <CheckBox x:Name="cbPast" Grid.Row="1" Margin="5,0,0,0" 
+                            Content="Historyczne" IsThreeState="False" IsChecked="{Binding PastIsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <CheckBox x:Name="cbIncoming" Grid.Row="1" Margin="5,0,0,0" 
+                            Content="Nadchodzące" IsThreeState="False" IsChecked="{Binding IncomingIsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Tasks, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding SelectedTask, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.ColumnSpan="2" >
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="60" />
                                 <GridViewColumn DisplayMemberBinding="{Binding Content}" Header="Zadanie" Width="1000"  />
-                                <GridViewColumn DisplayMemberBinding="{Binding Deadline}" Header="Termin" Width="300" />
+                                <GridViewColumn DisplayMemberBinding="{Binding Deadline, StringFormat={}{0:dd.MM.yyyy}}" Header="Termin" Width="300" />
                                 <GridViewColumn DisplayMemberBinding="{Binding Priority}" Header="Priorytet" Width="60" />
                                 <GridViewColumn Header="Czy zakończone" Width="60">
                                     <GridViewColumn.CellTemplate>
@@ -44,25 +56,25 @@
                             </GridView>
                         </ListView.View>
                     </ListView>
-                    <Label HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0" Content="Zadanie"/>
-                    <TextBox Grid.Row="1" Grid.Column="1">
+                    <Label HorizontalAlignment="Right" Grid.Row="2" Grid.Column="0" Content="Zadanie"/>
+                    <TextBox Grid.Row="2" Grid.Column="1">
                         <Binding Path="TaskContent" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
                                 <local:TaskContentValidationRule/>
                             </Binding.ValidationRules>
                         </Binding>
                     </TextBox>
-                    <Label HorizontalAlignment="Right" Grid.Row="2" Grid.Column="0" Content="Termin"/>
-                    <DatePicker Name="dpDeadline" Grid.Row="2" Grid.Column="1" Text="{Binding Deadline, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    <Label HorizontalAlignment="Right" Grid.Row="3" Grid.Column="0" Content="Priorytet"/>
-                    <TextBox Grid.Row="3" Grid.Column="1">
+                    <Label HorizontalAlignment="Right" Grid.Row="3" Grid.Column="0" Content="Termin"/>
+                    <DatePicker Name="dpDeadline" Grid.Row="3" Grid.Column="1" Text="{Binding Deadline, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource MyDateConverter}}"/>
+                    <Label HorizontalAlignment="Right" Grid.Row="4" Grid.Column="0" Content="Priorytet"/>
+                    <TextBox Grid.Row="4" Grid.Column="1">
                         <Binding Path="Priority" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
                                 <local:PriorityValidationRule Min="1" Max="3" />
                             </Binding.ValidationRules>
                         </Binding>
                     </TextBox>
-                    <StackPanel HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal">
+                    <StackPanel HorizontalAlignment="Center" Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
                         <Button Width="200" Content="Zrobione" Command="{Binding MarkAsDoneCommand}"/>
                         <Button Width="200" Content="Zapisz" Command="{Binding SaveTaskCommand}"/>
                         <Button Width="200" Content="Usuń" Command="{Binding DeleteTaskCommand}"/>
@@ -73,6 +85,7 @@
             <TabItem Header="Notatki">
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0*"/>
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
@@ -83,7 +96,7 @@
                         <RowDefinition Height="50"/>
                         <RowDefinition Height="50"/>
                     </Grid.RowDefinitions>
-                    <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding Notes, Mode=TwoWay}" SelectedItem="{Binding SelectedNote}">
+                    <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" ItemsSource="{Binding Notes, Mode=TwoWay}" SelectedItem="{Binding SelectedNote}">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="60" />
@@ -92,13 +105,13 @@
                             </GridView>
                         </ListView.View>
                     </ListView>
-                    <Label HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0" Content="Treść notatki"/>
-                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NoteContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    <Label HorizontalAlignment="Right" Grid.Row="3" Grid.Column="0" Content="Priorytet"/>
-                    <StackPanel HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal">
+                    <Label HorizontalAlignment="Left" Grid.Row="1" Grid.Column="0" Content="Treść notatki" Grid.ColumnSpan="2" Margin="720,0,0,0"/>
+                    <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding NoteContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label HorizontalAlignment="Left" Grid.Row="3" Grid.Column="0" Content="Priorytet" Grid.ColumnSpan="2" Margin="742,0,0,0"/>
+                    <StackPanel HorizontalAlignment="Left" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="497,0,0,0">
                         <Button Width="200" Content="Zapisz" Command="{Binding SaveNoteCommand}"/>
                         <Button Width="200" Content="Usuń" Command="{Binding DeleteNoteCommand}"/>
-                        <Button Grid.Row="4" Grid.Column="1"  Width="200" Content="Anuluj zaznaczenie" Command="{Binding DeselectNoteCommand}"/>
+                        <Button Width="200" Content="Anuluj zaznaczenie" Command="{Binding DeselectNoteCommand}"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

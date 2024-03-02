@@ -24,6 +24,101 @@ namespace TaskManager.ViewModels
         public ICommand DeleteNoteCommand { get; set; }
         public ICommand DeselectNoteCommand { get; set; }
 
+        private bool? _allIsChecked = true;
+        public bool? AllIsChecked
+        {
+            get
+            {
+                return _allIsChecked;
+            }
+            set
+            {
+                _allIsChecked = value;
+                if (_allIsChecked == true)
+                {
+                    PastIsChecked = true;
+                    IncomingIsChecked = true;
+                    Tasks = context.Tasks.ToList();
+                }
+                if(_allIsChecked == false)
+                {
+                    AllIsChecked = true;
+                }
+                UpdateTaskList();
+                NotifyPropertyChanged("AllIsChecked");
+            }
+        }
+        private bool _pastIsChecked = true;
+        public bool PastIsChecked
+        {
+            get
+            {
+                return _pastIsChecked;
+            }
+            set
+            {
+                _pastIsChecked = value;
+                UpdateAllCheckbox();
+                UpdateTaskList();
+                NotifyPropertyChanged("PastIsChecked");
+            }
+        }
+
+        private bool _incomingIsChecked = true;
+        public bool IncomingIsChecked
+        {
+            get
+            {
+                return _incomingIsChecked;
+            }
+            set
+            {
+                _incomingIsChecked = value;
+                UpdateAllCheckbox();
+                UpdateTaskList();
+                NotifyPropertyChanged("IncomingIsChecked");
+            }
+        }
+
+        private void UpdateAllCheckbox()
+        {
+            if (PastIsChecked && IncomingIsChecked)
+            {
+                _allIsChecked = true;
+            }
+            else if (!PastIsChecked && !IncomingIsChecked)
+            {
+                _allIsChecked = false;
+            }
+            else
+            {
+                _allIsChecked = null;
+            }
+            NotifyPropertyChanged("AllIsChecked");
+        }
+        private void UpdateTaskList()
+        {
+            if (PastIsChecked && IncomingIsChecked)
+            {
+                Tasks = context.Tasks.ToList();
+            }
+            else if (!PastIsChecked && !IncomingIsChecked)
+            {
+                Tasks.Clear();
+            }
+            else if(PastIsChecked) 
+            {
+                Tasks = context.Tasks.Where(t => t.Deadline < DateTime.Now).ToList();
+            }
+            else
+            {
+                Tasks = context.Tasks.Where(t => t.Deadline >= DateTime.Now).ToList();
+            }
+            NotifyPropertyChanged("Tasks");
+        }
+
+
+
         private MyTask task = new MyTask();//Obiekt powiązany z formularzem
         private MyNote note = new MyNote();
         
@@ -37,18 +132,12 @@ namespace TaskManager.ViewModels
             set
             {
                 _selectedTask = value;
-                if (_selectedTask != null)
+                if(_selectedTask != null)
                 {
-                    task = new MyTask
-                    {
-                        Id = _selectedTask.Id,
-                        Content = _selectedTask.Content,
-                        Deadline = _selectedTask.Deadline,
-                        Priority = _selectedTask.Priority,
-                        IsCompleted = _selectedTask.IsCompleted
-                    };
+                    TaskContent = SelectedTask.Content;
+                    Deadline = SelectedTask.Deadline;
+                    Priority = SelectedTask.Priority;
                 }
-                
                 NotifyPropertyChanged("SelectedTask");
             }
         }
@@ -67,6 +156,22 @@ namespace TaskManager.ViewModels
             }
         }
 
+        private string _searchPhrase = "";
+        public string SearchPhrase
+        {
+            get
+            {
+                return _searchPhrase;
+            }
+            set
+            {
+                _searchPhrase = value;
+                NotifyPropertyChanged("SearchPhrase");
+                Tasks = context.Tasks
+                    .Where(t => t.Content.ToLower().Contains(_searchPhrase.ToLower()))
+                    .ToList();
+            }
+        }
 
         public string TaskContent
         {
@@ -77,6 +182,7 @@ namespace TaskManager.ViewModels
             set
             {
                 task.Content = value;
+                Debug.WriteLine($"TaskContent {TaskContent}");
                 NotifyPropertyChanged("TaskContent");
             }
         }
@@ -107,18 +213,18 @@ namespace TaskManager.ViewModels
             }
         }
 
-        public bool IsCompleted
-        {
-            get
-            {
-                return task.IsCompleted;
-            }
-            set
-            {
-                task.IsCompleted = value;
-                NotifyPropertyChanged("IsCompleted");
-            }
-        }
+        //public bool IsCompleted
+        //{
+        //    get
+        //    {
+        //        return task.IsCompleted;
+        //    }
+        //    set
+        //    {
+        //        task.IsCompleted = value;
+        //        NotifyPropertyChanged("IsCompleted");
+        //    }
+        //}
 
         public MyNote _selectedNote;
         public MyNote SelectedNote
@@ -170,12 +276,12 @@ namespace TaskManager.ViewModels
             note.Created = DateTime.Now;
             Tasks = context.Tasks.ToList();
             Notes = context.Notes.ToList();
-            SaveTaskCommand = new MyCommand(InsertTask, IsTaskFormNotEmpty);
-            DeleteTaskCommand = new MyCommand(DeleteTask);
+            SaveTaskCommand = new MyCommand(SaveTask, IsTaskFormNotEmpty);
+            DeleteTaskCommand = new MyCommand(DeleteTask, IsTaskSelected);
             DeselectTaskCommand = new MyCommand(DeselectTask, IsTaskSelected);
             MarkAsDoneCommand = new MyCommand(MarkAsDone, IsTaskSelected);
             SaveNoteCommand = new MyCommand(InsertNote, IsNoteFormNotEmpty);
-            DeleteNoteCommand = new MyCommand(DeleteNote);
+            DeleteNoteCommand = new MyCommand(DeleteNote, IsNoteSelected);
             DeselectNoteCommand = new MyCommand(DeselectNote, IsNoteSelected);
         }
 
@@ -190,13 +296,25 @@ namespace TaskManager.ViewModels
             }
         }
 
-        public void InsertTask(object obj)
+        public void SaveTask(object obj)
         {
-            task.IsCompleted = false;
-            context.Tasks.Add(task);
+            if(SelectedTask  != null)
+            {
+                var modifiedTask = context.Tasks.First(t => t.Id == SelectedTask.Id);
+                modifiedTask.Content = TaskContent;
+                modifiedTask.Deadline = Deadline;
+                modifiedTask.Priority = Priority;   
+            }
+            else
+            {
+                task.IsCompleted = false;
+                context.Tasks.Add(task);
+            }
             context.SaveChanges();
             task = new MyTask();
-            Tasks = context.Tasks.ToList();
+            Tasks = context.Tasks
+                .Where(t => t.Content.ToLower().Contains(_searchPhrase.ToLower()))
+                .ToList();
         }
 
         private bool IsTaskFormNotEmpty(object obj)
